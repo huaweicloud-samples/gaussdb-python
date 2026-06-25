@@ -32,6 +32,7 @@ from .abc import Buffer, PipelineCommand, PQGen, PQGenConn
 from .pq.abc import PGcancelConn, PGconn, PGresult
 from .waiting import Ready, Wait
 from ._cmodule import _gaussdb
+from .conninfo import conninfo_to_dict
 from ._encodings import conninfo_encoding
 
 OK = pq.ConnStatus.OK
@@ -69,9 +70,24 @@ def _connect(conninfo: str, *, timeout: float = 0.0) -> PQGenConn[PGconn]:
     while True:
         if conn.status == BAD:
             encoding = conninfo_encoding(conninfo)
+            message = conn.get_error_message(encoding)
+            try:
+                conn_params = conninfo_to_dict(conninfo)
+            except Exception:
+                conn_params = {}
             raise e.OperationalError(
-                f"connection is bad: {conn.get_error_message(encoding)}",
-                pgconn=conn,
+                f"connection is bad: {message}",
+                pgconn=e.finish_pgconn(
+                    conn,
+                    db=conn_params.get("dbname"),
+                    user=conn_params.get("user"),
+                    host=conn_params.get("host"),
+                    hostaddr=conn_params.get("hostaddr"),
+                    port=conn_params.get("port"),
+                    options=conn_params.get("options"),
+                    error_message=message,
+                    needs_password="password" in message.lower(),
+                ),
             )
 
         status = conn.connect_poll()
@@ -89,13 +105,41 @@ def _connect(conninfo: str, *, timeout: float = 0.0) -> PQGenConn[PGconn]:
             break
         elif status == POLL_FAILED:
             encoding = conninfo_encoding(conninfo)
+            message = conn.get_error_message(encoding)
+            try:
+                conn_params = conninfo_to_dict(conninfo)
+            except Exception:
+                conn_params = {}
             raise e.OperationalError(
-                f"connection failed: {conn.get_error_message(encoding)}",
-                pgconn=e.finish_pgconn(conn),
+                f"connection failed: {message}",
+                pgconn=e.finish_pgconn(
+                    conn,
+                    db=conn_params.get("dbname"),
+                    user=conn_params.get("user"),
+                    host=conn_params.get("host"),
+                    hostaddr=conn_params.get("hostaddr"),
+                    port=conn_params.get("port"),
+                    options=conn_params.get("options"),
+                    error_message=message,
+                    needs_password="password" in message.lower(),
+                ),
             )
         else:
+            try:
+                conn_params = conninfo_to_dict(conninfo)
+            except Exception:
+                conn_params = {}
             raise e.InternalError(
-                f"unexpected poll status: {status}", pgconn=e.finish_pgconn(conn)
+                f"unexpected poll status: {status}",
+                pgconn=e.finish_pgconn(
+                    conn,
+                    db=conn_params.get("dbname"),
+                    user=conn_params.get("user"),
+                    host=conn_params.get("host"),
+                    hostaddr=conn_params.get("hostaddr"),
+                    port=conn_params.get("port"),
+                    options=conn_params.get("options"),
+                ),
             )
 
     conn.nonblocking = 1

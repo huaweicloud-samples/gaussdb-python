@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, NoReturn
 from asyncio import CancelledError
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field
 from collections.abc import Sequence
 
 from .pq.abc import PGconn, PGresult
@@ -229,13 +229,42 @@ class FinishedPGconn:
         self._raise()
 
 
-def finish_pgconn(pgconn: PGconn) -> PGconn:
-    args = {}
-    for f in fields(FinishedPGconn):
-        try:
-            args[f.name] = getattr(pgconn, f.name)
-        except Exception:
-            pass
+def finish_pgconn(
+    pgconn: PGconn,
+    *,
+    db: bytes | str | int | None = None,
+    user: bytes | str | int | None = None,
+    host: bytes | str | int | None = None,
+    hostaddr: bytes | str | int | None = None,
+    port: bytes | str | int | None = None,
+    options: bytes | str | int | None = None,
+    error_message: bytes | str | int | None = None,
+    needs_password: bool | None = None,
+) -> PGconn:
+    def _tobytes(value: bytes | str | int | None) -> bytes | None:
+        if value is None:
+            return None
+        if isinstance(value, bytes):
+            return value
+        return str(value).encode("utf-8", "replace")
+
+    args: dict[str, Any] = {}
+    for name, value in (
+        ("db", db),
+        ("user", user),
+        ("host", host),
+        ("hostaddr", hostaddr),
+        ("port", port),
+        ("options", options),
+        ("error_message", error_message),
+    ):
+        bvalue = _tobytes(value)
+        if bvalue is not None:
+            args[name] = bvalue
+
+    if needs_password is not None:
+        args["needs_password"] = bool(needs_password)
+
     pgconn.finish()
     return FinishedPGconn(**args)
 

@@ -35,7 +35,7 @@ def test_connect_operationalerror_pgconn(generators, dsn, monkeypatch):
     pgconn = excinfo.value.pgconn
     assert pgconn is not None
     assert pgconn.needs_password
-    assert b"ERROR:  Invalid username/password,login denied.\n" in pgconn.error_message
+    assert b"Invalid username/password,login denied." in pgconn.error_message
     assert pgconn.status == pq.ConnStatus.BAD.value
     assert pgconn.transaction_status == pq.TransactionStatus.UNKNOWN.value
     assert pgconn.pipeline_status == pq.PipelineStatus.OFF.value

@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import sys
 import pickle
+from typing import cast
 from weakref import ref
 
 import pytest
@@ -25,6 +26,36 @@ def test_finishedpgconn(pgconn):
         finished.socket
     with pytest.raises(e.OperationalError, match="connection is closed"):
         pgconn.socket
+
+
+def test_finish_pgconn_doesnt_read_pgconn_attrs():
+    class DummyPGconn:
+        def __init__(self):
+            self.finished = False
+
+        def finish(self):
+            self.finished = True
+
+        @property
+        def db(self):
+            raise AssertionError("db should not be read")
+
+        @property
+        def error_message(self):
+            raise AssertionError("error_message should not be read")
+
+    dummy = DummyPGconn()
+    finished = e.finish_pgconn(
+        cast(pq.abc.PGconn, dummy),
+        db="nosuchdb",
+        error_message="failed",
+        needs_password=True,
+    )
+
+    assert dummy.finished
+    assert finished.db == b"nosuchdb"
+    assert finished.error_message == b"failed"
+    assert finished.needs_password
 
 
 @pytest.mark.crdb_skip("severity_nonlocalized")
