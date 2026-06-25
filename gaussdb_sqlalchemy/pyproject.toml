@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=49.2.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gaussdb-sqlalchemy"
+version = "0.1.0"
+description = "SQLAlchemy dialect for Huawei GaussDB, built on the gaussdb (psycopg3 fork) driver."
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "GNU Lesser General Public License v3 (LGPLv3)" }
+authors = [{ name = "GaussDB Python Driver Contributors" }]
+keywords = ["gaussdb", "sqlalchemy", "database", "driver", "dialect"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Operating System :: POSIX",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "SQLAlchemy>=2.0,<2.2",
+    "gaussdb>=1.0.4",
+]
+
+[project.optional-dependencies]
+alembic = [
+    "alembic>=1.13",
+]
+test = [
+    "alembic>=1.13",
+    "pytest>=6.2.5",
+]
+
+[project.urls]
+Homepage = "https://github.com/jarrenL/gaussdb-python"
+
+[project.entry-points."sqlalchemy.dialects"]
+gaussdb = "gaussdb_sqlalchemy.base:GaussDBDialect"
+"gaussdb.psycopg" = "gaussdb_sqlalchemy.base:GaussDBDialect"
+"gaussdb.gaussdb" = "gaussdb_sqlalchemy.base:GaussDBDialect"
+
+[tool.setuptools]
+packages = ["gaussdb_sqlalchemy"]

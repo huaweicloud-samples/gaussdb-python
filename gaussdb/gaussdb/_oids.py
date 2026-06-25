@@ -5,6 +5,7 @@ This is an internal module. Types are publicly exposed by
 `gaussdb.gaussdb_.types`. This module is only used to know the OIDs at import
 time and avoid circular import problems.
 """
+from __future__ import annotations
 
 # Copyright (C) 2020 The Psycopg Team
 

@@ -7,8 +7,13 @@ Timezone utility functions.
 from __future__ import annotations
 
 import logging
+import sys
 from datetime import timezone, tzinfo
-from zoneinfo import ZoneInfo
+
+if sys.version_info >= (3, 9):
+    from zoneinfo import ZoneInfo
+else:
+    from backports.zoneinfo import ZoneInfo
 
 from .pq.abc import PGconn
 
